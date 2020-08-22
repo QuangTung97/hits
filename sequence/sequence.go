@@ -63,7 +63,7 @@ func (c *Context) NewSequencer() Sequencer {
 }
 
 // NewBarrier create a Barrier
-func NewBarrier(seqs []Sequencer) Barrier {
+func NewBarrier(seqs ...Sequencer) Barrier {
 	if len(seqs) == 0 {
 		panic("Barrier should contain at least one sequence")
 	}
