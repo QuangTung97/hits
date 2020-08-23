@@ -157,26 +157,29 @@ func (c *Context) runEventEmitter(wg *sync.WaitGroup, initSequence uint64) {
 	defer wg.Done()
 
 	sequence := initSequence
-	events := make([]MarshalledEvent, 0, 128)
+	listenChannels := make([]chan<- MarshalledEvent, 0, 128)
 	for {
 		newSeq := c.seqCtx.WaitFor(c.barriers.eventEmitter, sequence+1, c.strats.EventEmitter)
+
+		c.observer.getChannels(&listenChannels)
 		for i := sequence + 1; i <= newSeq; i++ {
 			output := c.getOutput(i)
-			events = append(events, MarshalledEvent{
+			event := MarshalledEvent{
 				Type:      output.eventType,
 				Sequence:  output.sequence,
 				Timestamp: output.timestamp,
 				Data:      output.data,
-			})
+			}
+			for _, ch := range listenChannels {
+				ch <- event
+			}
 		}
 
-		log.Println("EMITTER", events)
-
-		// clean up events
-		for i := range events {
-			events[i].Data = nil
+		// clear channels
+		for i := range listenChannels {
+			listenChannels[i] = nil
 		}
-		events = events[:0]
+		listenChannels = listenChannels[:0]
 
 		sequence = newSeq
 		c.seqCtx.Commit(c.seqs.eventEmitter, sequence)

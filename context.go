@@ -66,6 +66,7 @@ type (
 		barriers     sequenceBarriers
 		strats       WaitStrategies
 		callbacks    callbacks
+		observer     *observerService
 	}
 )
 
@@ -162,6 +163,7 @@ func NewContext(cfg Config) *Context {
 		barriers:     barriers,
 		strats:       DefaultWaitStrategies(),
 		callbacks:    callbacks,
+		observer:     newObserverService(),
 	}
 }
 
