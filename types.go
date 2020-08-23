@@ -4,25 +4,48 @@ type (
 	CommandType uint32
 	EventType   uint32
 
-	CommandUnmarshaller func(cmdType CommandType, data []byte) interface{}
-	EventMarshaller     func(eventType EventType, event interface{}) []byte
-	Processor           func(cmdType CommandType, cmd interface{}, timestamp uint64) (eventType EventType, event interface{})
-
 	Command struct {
 		Type    CommandType
 		Data    []byte
-		ReplyTo chan<- ReplyValue
+		ReplyTo chan<- Event
 	}
 
-	ReplyValue struct {
-		Type  EventType
-		Event interface{}
+	MarshalledEvent struct {
+		Type      EventType
+		Sequence  uint64
+		Timestamp uint64
+		Data      []byte
 	}
 
+	Event struct {
+		Type      EventType
+		Sequence  uint64
+		Timestamp uint64
+		Value     interface{}
+	}
+)
+
+type (
+	CommandUnmarshaller func(cmdType CommandType, data []byte) interface{}
+	EventMarshaller     func(eventType EventType, event interface{}) []byte
+	Processor           interface {
+		Init() uint64
+		Process(cmdType CommandType, cmd interface{},
+			timestamp uint64) (eventType EventType, event interface{})
+	}
+	Journaler interface {
+		Store(events []MarshalledEvent)
+	}
+	DBWriter interface {
+		Write(events []Event)
+	}
+)
+
+type (
 	inputElem struct {
 		timestamp uint64
 		sequence  uint64
-		replyTo   chan<- ReplyValue
+		replyTo   chan<- Event
 
 		cmdType CommandType
 		data    []byte
@@ -32,7 +55,7 @@ type (
 	outputElem struct {
 		timestamp uint64
 		sequence  uint64
-		replyTo   chan<- ReplyValue
+		replyTo   chan<- Event
 
 		eventType EventType
 		event     interface{}

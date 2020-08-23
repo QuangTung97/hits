@@ -2,7 +2,6 @@ package hits
 
 import (
 	"hits/sequence"
-	"sync"
 	"time"
 )
 
@@ -12,6 +11,8 @@ type (
 		CommandUnmarshaller CommandUnmarshaller
 		EventMarshaller     EventMarshaller
 		Processor           Processor
+		Journaler           Journaler
+		DBWriter            DBWriter
 	}
 
 	sequencers struct {
@@ -39,6 +40,9 @@ type (
 	callbacks struct {
 		commandUnmarshaller CommandUnmarshaller
 		processor           Processor
+		eventMarshaller     EventMarshaller
+		journaler           Journaler
+		dbWriter            DBWriter
 	}
 
 	WaitStrategies struct {
@@ -96,7 +100,7 @@ func newBarriers(seqs sequencers) sequenceBarriers {
 }
 
 func DefaultWaitStrategies() WaitStrategies {
-	sleepWait := sequence.SleepWaitStrategy{Duration: 10 * time.Microsecond}
+	sleepWait := sequence.SleepWaitStrategy{Duration: 100 * time.Microsecond}
 	return WaitStrategies{
 		Producer:     sleepWait,
 		Unmarshaller: sleepWait,
@@ -133,6 +137,21 @@ func NewContext(cfg Config) *Context {
 	}
 	callbacks.processor = cfg.Processor
 
+	if cfg.EventMarshaller == nil {
+		panic("EventMarshaller must not be nil")
+	}
+	callbacks.eventMarshaller = cfg.EventMarshaller
+
+	if cfg.Journaler == nil {
+		panic("Journaler must not be nil")
+	}
+	callbacks.journaler = cfg.Journaler
+
+	if cfg.DBWriter == nil {
+		panic("DBWriter must not be nil")
+	}
+	callbacks.dbWriter = cfg.DBWriter
+
 	return &Context{
 		seqCtx:       seqCtx,
 		bufferMask:   mask,
@@ -154,15 +173,13 @@ func (c *Context) getOutput(sequence uint64) *outputElem {
 	return &c.outputBuffer[sequence&c.bufferMask]
 }
 
-func (c *Context) Run(cmdChan <-chan Command) {
-	var wg sync.WaitGroup
-	wg.Add(5)
-
-	initSequence := uint64(0)
-
-	go c.runProducer(&wg, cmdChan, initSequence)
-	go c.runUnmarshaller(&wg, initSequence)
-	go c.runProcessor(&wg, initSequence)
-
-	wg.Wait()
+func (c *Context) initSequencers(initSequence uint64) {
+	c.seqCtx.Commit(c.seqs.producer, initSequence)
+	c.seqCtx.Commit(c.seqs.unmarshaller, initSequence)
+	c.seqCtx.Commit(c.seqs.processor, initSequence)
+	c.seqCtx.Commit(c.seqs.marshaller, initSequence)
+	c.seqCtx.Commit(c.seqs.journaler, initSequence)
+	c.seqCtx.Commit(c.seqs.dbWriter, initSequence)
+	c.seqCtx.Commit(c.seqs.eventEmitter, initSequence)
+	c.seqCtx.Commit(c.seqs.replier, initSequence)
 }
