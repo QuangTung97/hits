@@ -29,6 +29,11 @@ func (db *DBJournaler) Store(events []hits.MarshalledEvent) {
 	log.Println("JOURNAL", events)
 }
 
+func (db *DBJournaler) ReadFrom(fromSequence uint64) ([]hits.MarshalledEvent, error) {
+	res := make([]hits.MarshalledEvent, 0)
+	return res, hits.ErrEventsNotFound
+}
+
 func (db *DBWriter) Write(events []hits.Event) {
 	log.Println("DBWriter", events)
 }

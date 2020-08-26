@@ -9,7 +9,6 @@ service ObserverService {
 }
 
 message ListenRequest {
-  uint64 sequence = 1;
 }
 
 message ListenEvent {
@@ -17,4 +16,15 @@ message ListenEvent {
   uint64 sequence = 2;
   uint64 timestamp = 3;
   bytes data = 4;
+}
+
+service InitService {
+  rpc ReadEvents (ReadEventsRequest) returns (stream ListenEvent);
+}
+
+message ReadEventsRequest {
+  uint64 from_sequence = 1;
+}
+
+message ErrEventsNotFound {
 }

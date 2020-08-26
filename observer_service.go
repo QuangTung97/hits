@@ -19,6 +19,15 @@ func newObserverService() *observerService {
 	}
 }
 
+func marshalledEventToProto(event MarshalledEvent) *rpc.ListenEvent {
+	return &rpc.ListenEvent{
+		Type:      uint32(event.Type),
+		Sequence:  event.Sequence,
+		Timestamp: event.Timestamp,
+		Data:      event.Data,
+	}
+}
+
 func (s *observerService) Listen(
 	req *rpc.ListenRequest, listenEvents rpc.ObserverService_ListenServer,
 ) error {
@@ -38,12 +47,7 @@ func (s *observerService) Listen(
 
 	for {
 		event := <-channel
-		err := listenEvents.Send(&rpc.ListenEvent{
-			Type:      uint32(event.Type),
-			Sequence:  event.Sequence,
-			Timestamp: event.Timestamp,
-			Data:      event.Data,
-		})
+		err := listenEvents.Send(marshalledEventToProto(event))
 		if err != nil {
 			return err
 		}

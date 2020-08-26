@@ -1,5 +1,7 @@
 package hits
 
+import "errors"
+
 type (
 	CommandType uint32
 	EventType   uint32
@@ -25,6 +27,8 @@ type (
 	}
 )
 
+var ErrEventsNotFound = errors.New("events from this sequence not found")
+
 type (
 	CommandUnmarshaller func(cmdType CommandType, data []byte) interface{}
 	EventMarshaller     func(eventType EventType, event interface{}) []byte
@@ -35,6 +39,7 @@ type (
 	}
 	Journaler interface {
 		Store(events []MarshalledEvent)
+		ReadFrom(fromSequence uint64) ([]MarshalledEvent, error)
 	}
 	DBWriter interface {
 		Write(events []Event)
