@@ -8,7 +8,7 @@ type (
 
 	Command struct {
 		Type    CommandType
-		Data    []byte
+		Value   interface{}
 		ReplyTo chan<- Event
 	}
 
@@ -58,7 +58,6 @@ type (
 		replyTo   chan<- Event
 
 		cmdType CommandType
-		data    []byte
 		command interface{}
 	}
 

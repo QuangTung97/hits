@@ -27,28 +27,12 @@ func (c *Context) runProducer(wg *sync.WaitGroup, cmdChan <-chan Command, initSe
 		input := c.getInput(sequence)
 
 		input.cmdType = cmd.Type
-		input.data = cmd.Data
+		input.command = cmd.Value
 		input.replyTo = cmd.ReplyTo
 		input.sequence = sequence
 		input.timestamp = getNowUnixMilli()
 
 		c.seqCtx.Commit(c.seqs.producer, sequence)
-	}
-}
-
-func (c *Context) runUnmarshaller(wg *sync.WaitGroup, initSequence uint64) {
-	defer wg.Done()
-
-	sequence := initSequence
-	for {
-		c.seqCtx.WaitFor(c.barriers.unmarshaller, sequence+1, c.strats.Unmarshaller)
-		sequence++
-
-		input := c.getInput(sequence)
-		input.command = c.callbacks.commandUnmarshaller(input.cmdType, input.data)
-		input.data = nil
-
-		c.seqCtx.Commit(c.seqs.unmarshaller, sequence)
 	}
 }
 
@@ -237,7 +221,7 @@ func (c *Context) runRPCServer(wg *sync.WaitGroup) {
 
 func (c *Context) Run(cmdChan <-chan Command) {
 	var wg sync.WaitGroup
-	wg.Add(9)
+	wg.Add(8)
 
 	initSequence := c.callbacks.processor.Init()
 
@@ -246,7 +230,6 @@ func (c *Context) Run(cmdChan <-chan Command) {
 	go c.runRPCServer(&wg)
 
 	go c.runProducer(&wg, cmdChan, initSequence)
-	go c.runUnmarshaller(&wg, initSequence)
 	go c.runProcessor(&wg, initSequence)
 	go c.runMarshaller(&wg, initSequence)
 	go c.runJournaler(&wg, initSequence)

@@ -44,7 +44,7 @@ func sendCommands(ch chan<- hits.Command) {
 	for {
 		ch <- hits.Command{
 			Type:    1,
-			Data:    []byte{'a', 'b', 'c'},
+			Value:   "abcd",
 			ReplyTo: replyChan,
 		}
 		time.Sleep(10 * time.Second)
@@ -58,10 +58,7 @@ func main() {
 
 	cfg := hits.Config{
 		RingBufferShift: 2,
-		CommandUnmarshaller: func(cmdType hits.CommandType, data []byte) interface{} {
-			return string(data)
-		},
-		Processor: &p,
+		Processor:       &p,
 		EventMarshaller: func(eventType hits.EventType, event interface{}) []byte {
 			log.Println("MARSHAL", eventType, event)
 			return []byte(event.(string) + " marshalled")

@@ -7,17 +7,15 @@ import (
 
 type (
 	Config struct {
-		RingBufferShift     uint8
-		CommandUnmarshaller CommandUnmarshaller
-		EventMarshaller     EventMarshaller
-		Processor           Processor
-		Journaler           Journaler
-		DBWriter            DBWriter
+		RingBufferShift uint8
+		EventMarshaller EventMarshaller
+		Processor       Processor
+		Journaler       Journaler
+		DBWriter        DBWriter
 	}
 
 	sequencers struct {
 		producer     sequence.Sequencer
-		unmarshaller sequence.Sequencer
 		processor    sequence.Sequencer
 		marshaller   sequence.Sequencer
 		journaler    sequence.Sequencer
@@ -28,7 +26,6 @@ type (
 
 	sequenceBarriers struct {
 		producer     sequence.Barrier
-		unmarshaller sequence.Barrier
 		processor    sequence.Barrier
 		marshaller   sequence.Barrier
 		journaler    sequence.Barrier
@@ -38,16 +35,14 @@ type (
 	}
 
 	callbacks struct {
-		commandUnmarshaller CommandUnmarshaller
-		processor           Processor
-		eventMarshaller     EventMarshaller
-		journaler           Journaler
-		dbWriter            DBWriter
+		processor       Processor
+		eventMarshaller EventMarshaller
+		journaler       Journaler
+		dbWriter        DBWriter
 	}
 
 	WaitStrategies struct {
 		Producer     sequence.WaitStrategy
-		Unmarshaller sequence.WaitStrategy
 		Processor    sequence.WaitStrategy
 		Marshaller   sequence.WaitStrategy
 		Journaler    sequence.WaitStrategy
@@ -77,7 +72,6 @@ func shiftToMask(shift uint8) uint64 {
 func newSequencers(ctx *sequence.Context) sequencers {
 	return sequencers{
 		producer:     ctx.NewSequencer(),
-		unmarshaller: ctx.NewSequencer(),
 		processor:    ctx.NewSequencer(),
 		marshaller:   ctx.NewSequencer(),
 		journaler:    ctx.NewSequencer(),
@@ -90,8 +84,7 @@ func newSequencers(ctx *sequence.Context) sequencers {
 func newBarriers(seqs sequencers) sequenceBarriers {
 	return sequenceBarriers{
 		producer:     sequence.NewBarrier(seqs.eventEmitter, seqs.replier),
-		unmarshaller: sequence.NewBarrier(seqs.producer),
-		processor:    sequence.NewBarrier(seqs.unmarshaller),
+		processor:    sequence.NewBarrier(seqs.producer),
 		marshaller:   sequence.NewBarrier(seqs.processor),
 		journaler:    sequence.NewBarrier(seqs.marshaller),
 		dbWriter:     sequence.NewBarrier(seqs.journaler),
@@ -104,7 +97,6 @@ func DefaultWaitStrategies() WaitStrategies {
 	sleepWait := sequence.SleepWaitStrategy{Duration: 100 * time.Microsecond}
 	return WaitStrategies{
 		Producer:     sleepWait,
-		Unmarshaller: sleepWait,
 		Processor:    sleepWait,
 		Marshaller:   sleepWait,
 		Journaler:    sleepWait,
@@ -127,11 +119,6 @@ func NewContext(cfg Config) *Context {
 	barriers := newBarriers(seqs)
 
 	callbacks := callbacks{}
-
-	if cfg.CommandUnmarshaller == nil {
-		panic("CommandUnmarshaller must not be nil")
-	}
-	callbacks.commandUnmarshaller = cfg.CommandUnmarshaller
 
 	if cfg.Processor == nil {
 		panic("Processor must not be nil")
@@ -177,7 +164,6 @@ func (c *Context) getOutput(sequence uint64) *outputElem {
 
 func (c *Context) initSequencers(initSequence uint64) {
 	c.seqCtx.Commit(c.seqs.producer, initSequence)
-	c.seqCtx.Commit(c.seqs.unmarshaller, initSequence)
 	c.seqCtx.Commit(c.seqs.processor, initSequence)
 	c.seqCtx.Commit(c.seqs.marshaller, initSequence)
 	c.seqCtx.Commit(c.seqs.journaler, initSequence)
