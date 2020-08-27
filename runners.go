@@ -1,9 +1,7 @@
 package hits
 
 import (
-	"fmt"
 	"hits/rpc"
-	"log"
 	"net"
 	"sync"
 	"time"
@@ -49,8 +47,6 @@ func (c *Context) runUnmarshaller(wg *sync.WaitGroup, initSequence uint64) {
 		input := c.getInput(sequence)
 		input.command = c.callbacks.commandUnmarshaller(input.cmdType, input.data)
 		input.data = nil
-
-		log.Printf("Unmarshaller: %d, %+v\n", sequence, input)
 
 		c.seqCtx.Commit(c.seqs.unmarshaller, sequence)
 	}
@@ -104,8 +100,6 @@ func (c *Context) runJournaler(wg *sync.WaitGroup, initSequence uint64) {
 	events := make([]MarshalledEvent, 0, 128)
 	for {
 		newSeq := c.seqCtx.WaitFor(c.barriers.journaler, sequence+1, c.strats.Journaler)
-
-		log.Println("NEW SEQ", newSeq)
 
 		for i := sequence + 1; i <= newSeq; i++ {
 			output := c.getOutput(i)
@@ -170,7 +164,6 @@ func (c *Context) runEventEmitter(wg *sync.WaitGroup, initSequence uint64) {
 
 		newChangeSequence, newChannels := c.observer.getChannels(observerChangeSequence)
 		if newChangeSequence != observerChangeSequence {
-			fmt.Println("Change sequence", newSeq)
 			observerChangeSequence = newChangeSequence
 			listenChannels = newChannels
 		}
@@ -184,14 +177,10 @@ func (c *Context) runEventEmitter(wg *sync.WaitGroup, initSequence uint64) {
 				Data:      output.data,
 			}
 			if i == newSeq {
-				fmt.Println("LAST EVENT", newSeq)
 				c.observer.setLastEvent(event)
 			}
 
-			fmt.Println("LEN LISTENS", len(listenChannels))
-
 			for _, ch := range listenChannels {
-				fmt.Println("EMIT EVENT", event)
 				ch <- event
 			}
 
@@ -217,10 +206,7 @@ func (c *Context) runReplier(wg *sync.WaitGroup, initSequence uint64) {
 				Timestamp: output.timestamp,
 				Value:     output.event,
 			}
-			log.Println("REPLY Begin", event)
 			output.replyTo <- event
-			log.Println("REPLY End", event)
-
 			output.replyTo = nil
 			output.event = nil
 		}
