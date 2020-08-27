@@ -1,7 +1,7 @@
 package hits
 
 import (
-	"hits/rpc"
+	"github.com/QuangTung97/hits/rpc"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

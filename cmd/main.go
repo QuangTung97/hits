@@ -1,7 +1,7 @@
 package main
 
 import (
-	"hits"
+	"github.com/QuangTung97/hits"
 	"log"
 	"time"
 )

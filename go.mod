@@ -1,4 +1,4 @@
-module hits
+module github.com/QuangTung97/hits
 
 go 1.14
 

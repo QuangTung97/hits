@@ -1,7 +1,7 @@
 package hits
 
 import (
-	"hits/rpc"
+	"github.com/QuangTung97/hits/rpc"
 	"net"
 	"sync"
 	"time"

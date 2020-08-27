@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"hits"
+	"github.com/QuangTung97/hits"
 )
 
 func main() {

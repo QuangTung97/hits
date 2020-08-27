@@ -2,7 +2,7 @@ package hits
 
 import (
 	"context"
-	"hits/rpc"
+	"github.com/QuangTung97/hits/rpc"
 	"sync"
 
 	"google.golang.org/grpc"

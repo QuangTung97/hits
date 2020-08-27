@@ -1,7 +1,7 @@
 package hits
 
 import (
-	"hits/sequence"
+	"github.com/QuangTung97/hits/sequence"
 	"time"
 )
 
