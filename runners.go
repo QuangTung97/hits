@@ -1,9 +1,14 @@
 package hits
 
 import (
+	"fmt"
+	"hits/rpc"
 	"log"
+	"net"
 	"sync"
 	"time"
+
+	"google.golang.org/grpc"
 )
 
 func getNowUnixMilli() uint64 {
@@ -157,11 +162,19 @@ func (c *Context) runEventEmitter(wg *sync.WaitGroup, initSequence uint64) {
 	defer wg.Done()
 
 	sequence := initSequence
-	listenChannels := make([]chan<- MarshalledEvent, 0, 128)
+	observerChangeSequence := uint64(0)
+	listenChannels := make([]chan<- MarshalledEvent, 0)
+
 	for {
 		newSeq := c.seqCtx.WaitFor(c.barriers.eventEmitter, sequence+1, c.strats.EventEmitter)
 
-		c.observer.getChannels(&listenChannels)
+		newChangeSequence, newChannels := c.observer.getChannels(observerChangeSequence)
+		if newChangeSequence != observerChangeSequence {
+			fmt.Println("Change sequence", newSeq)
+			observerChangeSequence = newChangeSequence
+			listenChannels = newChannels
+		}
+
 		for i := sequence + 1; i <= newSeq; i++ {
 			output := c.getOutput(i)
 			event := MarshalledEvent{
@@ -170,16 +183,20 @@ func (c *Context) runEventEmitter(wg *sync.WaitGroup, initSequence uint64) {
 				Timestamp: output.timestamp,
 				Data:      output.data,
 			}
+			if i == newSeq {
+				fmt.Println("LAST EVENT", newSeq)
+				c.observer.setLastEvent(event)
+			}
+
+			fmt.Println("LEN LISTENS", len(listenChannels))
+
 			for _, ch := range listenChannels {
+				fmt.Println("EMIT EVENT", event)
 				ch <- event
 			}
-		}
 
-		// clear channels
-		for i := range listenChannels {
-			listenChannels[i] = nil
+			output.data = nil
 		}
-		listenChannels = listenChannels[:0]
 
 		sequence = newSeq
 		c.seqCtx.Commit(c.seqs.eventEmitter, sequence)
@@ -205,6 +222,7 @@ func (c *Context) runReplier(wg *sync.WaitGroup, initSequence uint64) {
 			log.Println("REPLY End", event)
 
 			output.replyTo = nil
+			output.event = nil
 		}
 
 		sequence = newSeq
@@ -212,13 +230,34 @@ func (c *Context) runReplier(wg *sync.WaitGroup, initSequence uint64) {
 	}
 }
 
+func (c *Context) runRPCServer(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	server := grpc.NewServer()
+
+	rpc.RegisterObserverServiceServer(server, c.observer)
+	// rpc.RegisterInitServiceServer(server, c.in)
+
+	listener, err := net.Listen("tcp", ":5000")
+	if err != nil {
+		panic(err)
+	}
+
+	err = server.Serve(listener)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (c *Context) Run(cmdChan <-chan Command) {
 	var wg sync.WaitGroup
-	wg.Add(7)
+	wg.Add(9)
 
 	initSequence := c.callbacks.processor.Init()
 
 	c.initSequencers(initSequence)
+
+	go c.runRPCServer(&wg)
 
 	go c.runProducer(&wg, cmdChan, initSequence)
 	go c.runUnmarshaller(&wg, initSequence)

@@ -3,6 +3,7 @@ package main
 import (
 	"hits"
 	"log"
+	"time"
 )
 
 type Processor struct {
@@ -46,6 +47,7 @@ func sendCommands(ch chan<- hits.Command) {
 			Data:    []byte{'a', 'b', 'c'},
 			ReplyTo: replyChan,
 		}
+		time.Sleep(10 * time.Second)
 	}
 }
 

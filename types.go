@@ -25,6 +25,11 @@ type (
 		Timestamp uint64
 		Value     interface{}
 	}
+
+	NullMarshalledEvent struct {
+		Valid bool
+		Event MarshalledEvent
+	}
 )
 
 var ErrEventsNotFound = errors.New("events from this sequence not found")
