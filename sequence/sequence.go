@@ -80,8 +80,10 @@ func NewBarrier(seqs ...Sequencer) Barrier {
 // WaitFor wait for a barrier
 func (c *Context) WaitFor(b Barrier, expectedSequence uint64, waitStrategy WaitStrategy) uint64 {
 	for {
-		minSequence := atomic.LoadUint64(&c.atomicSequences[0].value)
-		for _, offset := range b.offsets {
+		first := b.offsets[0]
+		minSequence := atomic.LoadUint64(&c.atomicSequences[first].value)
+
+		for _, offset := range b.offsets[1:] {
 			seq := atomic.LoadUint64(&c.atomicSequences[offset].value)
 			if seq < minSequence {
 				minSequence = seq
