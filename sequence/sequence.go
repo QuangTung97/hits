@@ -36,6 +36,7 @@ type (
 		NotifyAll()
 	}
 
+	// BlockingWaitStrategy using mutex and condition variable
 	BlockingWaitStrategy struct {
 		mut  sync.Mutex
 		cond *sync.Cond
@@ -112,6 +113,7 @@ func (c *Context) Commit(seq Sequencer, value uint64) {
 // WaitStrategy definitions
 //-------------------------------
 
+// NewBlockingWaitStrategy create a blocking wait strategy
 func NewBlockingWaitStrategy() *BlockingWaitStrategy {
 	s := &BlockingWaitStrategy{}
 	s.cond = sync.NewCond(&s.mut)
@@ -125,6 +127,7 @@ func (s *BlockingWaitStrategy) Wait() {
 	s.mut.Unlock()
 }
 
+// NotifyAll notify all waiting goroutines
 func (s *BlockingWaitStrategy) NotifyAll() {
 	s.cond.Broadcast()
 }
@@ -134,6 +137,7 @@ func (s SleepWaitStrategy) Wait() {
 	time.Sleep(s.Duration)
 }
 
+// NotifyAll notify all waiting goroutines
 func (s SleepWaitStrategy) NotifyAll() {
 }
 
@@ -142,5 +146,6 @@ func (s YieldingWaitStrategy) Wait() {
 	runtime.Gosched()
 }
 
+// NotifyAll notify all waiting goroutines
 func (s YieldingWaitStrategy) NotifyAll() {
 }

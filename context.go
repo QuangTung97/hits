@@ -5,6 +5,7 @@ import (
 )
 
 type (
+	// Config for configure HITS
 	Config struct {
 		RingBufferShift uint8
 		EventMarshaller EventMarshaller
@@ -40,6 +41,7 @@ type (
 		dbWriter        DBWriter
 	}
 
+	// WaitStrategies configure wait strategies
 	WaitStrategies struct {
 		Producer     sequence.WaitStrategy
 		Processor    sequence.WaitStrategy
@@ -50,6 +52,7 @@ type (
 		Replier      sequence.WaitStrategy
 	}
 
+	// Context is the context of HITS
 	Context struct {
 		seqCtx       *sequence.Context
 		bufferMask   uint64
@@ -92,6 +95,7 @@ func newBarriers(seqs sequencers) sequenceBarriers {
 	}
 }
 
+// DefaultWaitStrategies returns the default strategies
 func DefaultWaitStrategies() WaitStrategies {
 	return WaitStrategies{
 		Producer:     sequence.NewBlockingWaitStrategy(),
@@ -104,6 +108,7 @@ func DefaultWaitStrategies() WaitStrategies {
 	}
 }
 
+// NewContext returns a new context
 func NewContext(cfg Config) *Context {
 	mask := shiftToMask(cfg.RingBufferShift)
 	size := uint64(1 << cfg.RingBufferShift)

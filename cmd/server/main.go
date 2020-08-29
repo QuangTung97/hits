@@ -5,37 +5,37 @@ import (
 	"log"
 )
 
-type Processor struct {
+type processor struct {
 }
 
-type DBJournaler struct {
+type dbJournaler struct {
 }
 
-type DBWriter struct {
+type dbWriter struct {
 }
 
-func (p *Processor) Process(
+func (p *processor) Process(
 	cmdType hits.CommandType, cmd interface{}, timestamp uint64,
 ) (eventType hits.EventType, event interface{}) {
 	log.Println("PROC:", cmdType, cmd, timestamp)
 	return hits.EventType(cmdType + 10), cmd.(string) + " tung"
 }
 
-func (p *Processor) Init() uint64 {
+func (p *processor) Init() uint64 {
 	return 0
 }
 
-func (db *DBJournaler) Store(events []hits.MarshalledEvent) {
+func (db *dbJournaler) Store(events []hits.MarshalledEvent) {
 	log.Println("JOURNAL", events)
 }
 
-func (db *DBJournaler) ReadFrom(fromSequence uint64) ([]hits.MarshalledEvent, error) {
+func (db *dbJournaler) ReadFrom(fromSequence uint64) ([]hits.MarshalledEvent, error) {
 	log.Println("ReadFrom")
 	res := make([]hits.MarshalledEvent, 0)
 	return res, hits.ErrEventsNotFound
 }
 
-func (db *DBWriter) Write(events []hits.Event) {
+func (db *dbWriter) Write(events []hits.Event) {
 	log.Println("DBWriter", events)
 }
 
@@ -51,9 +51,9 @@ func sendCommands(ch chan<- hits.Command) {
 }
 
 func main() {
-	p := Processor{}
-	db := DBJournaler{}
-	w := DBWriter{}
+	p := processor{}
+	db := dbJournaler{}
+	w := dbWriter{}
 
 	cfg := hits.Config{
 		RingBufferShift: 2,

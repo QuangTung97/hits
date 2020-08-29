@@ -100,6 +100,7 @@ func (s *observerService) setLastEvent(lastEvent MarshalledEvent) {
 	}
 }
 
+// Listen is a client API
 func Listen(ctx context.Context, address string, ch chan<- MarshalledEvent) error {
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {

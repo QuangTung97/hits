@@ -228,6 +228,7 @@ func (c *Context) runRPCServer(wg *sync.WaitGroup) {
 	}
 }
 
+// Run starts the HITS
 func (c *Context) Run(cmdChan <-chan Command) {
 	var wg sync.WaitGroup
 	wg.Add(8)
