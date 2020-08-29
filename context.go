@@ -2,7 +2,6 @@ package hits
 
 import (
 	"github.com/QuangTung97/hits/sequence"
-	"time"
 )
 
 type (
@@ -94,15 +93,14 @@ func newBarriers(seqs sequencers) sequenceBarriers {
 }
 
 func DefaultWaitStrategies() WaitStrategies {
-	sleepWait := sequence.SleepWaitStrategy{Duration: 100 * time.Microsecond}
 	return WaitStrategies{
-		Producer:     sleepWait,
-		Processor:    sleepWait,
-		Marshaller:   sleepWait,
-		Journaler:    sleepWait,
-		DBWriter:     sleepWait,
-		EventEmitter: sleepWait,
-		Replier:      sleepWait,
+		Producer:     sequence.NewBlockingWaitStrategy(),
+		Processor:    sequence.NewBlockingWaitStrategy(),
+		Marshaller:   sequence.NewBlockingWaitStrategy(),
+		Journaler:    sequence.NewBlockingWaitStrategy(),
+		DBWriter:     sequence.NewBlockingWaitStrategy(),
+		EventEmitter: sequence.NewBlockingWaitStrategy(),
+		Replier:      sequence.NewBlockingWaitStrategy(),
 	}
 }
 

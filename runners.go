@@ -34,6 +34,7 @@ func (c *Context) runProducer(wg *sync.WaitGroup, cmdChan <-chan Command, initSe
 		input.timestamp = getNowUnixMilli()
 
 		c.seqCtx.Commit(c.seqs.producer, sequence)
+		c.strats.Processor.NotifyAll()
 	}
 }
 
@@ -60,6 +61,7 @@ func (c *Context) runProcessor(wg *sync.WaitGroup, initSequence uint64) {
 		input.command = nil
 
 		c.seqCtx.Commit(c.seqs.processor, sequence)
+		c.strats.Marshaller.NotifyAll()
 	}
 }
 
@@ -75,6 +77,7 @@ func (c *Context) runMarshaller(wg *sync.WaitGroup, initSequence uint64) {
 		output.data = c.callbacks.eventMarshaller(output.eventType, output.event)
 
 		c.seqCtx.Commit(c.seqs.marshaller, sequence)
+		c.strats.Journaler.NotifyAll()
 	}
 }
 
@@ -105,6 +108,7 @@ func (c *Context) runJournaler(wg *sync.WaitGroup, initSequence uint64) {
 
 		sequence = newSeq
 		c.seqCtx.Commit(c.seqs.journaler, sequence)
+		c.strats.DBWriter.NotifyAll()
 	}
 }
 
@@ -134,6 +138,8 @@ func (c *Context) runDBWriter(wg *sync.WaitGroup, initSequence uint64) {
 
 		sequence = newSeq
 		c.seqCtx.Commit(c.seqs.dbWriter, sequence)
+		c.strats.EventEmitter.NotifyAll()
+		c.strats.Replier.NotifyAll()
 	}
 }
 
@@ -174,6 +180,7 @@ func (c *Context) runEventEmitter(wg *sync.WaitGroup, initSequence uint64) {
 
 		sequence = newSeq
 		c.seqCtx.Commit(c.seqs.eventEmitter, sequence)
+		c.strats.Producer.NotifyAll()
 	}
 }
 
@@ -198,6 +205,7 @@ func (c *Context) runReplier(wg *sync.WaitGroup, initSequence uint64) {
 
 		sequence = newSeq
 		c.seqCtx.Commit(c.seqs.replier, sequence)
+		c.strats.Producer.NotifyAll()
 	}
 }
 

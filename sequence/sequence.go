@@ -2,6 +2,7 @@ package sequence
 
 import (
 	"runtime"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -32,6 +33,12 @@ type (
 	// WaitStrategy on barrier
 	WaitStrategy interface {
 		Wait()
+		NotifyAll()
+	}
+
+	BlockingWaitStrategy struct {
+		mut  sync.Mutex
+		cond *sync.Cond
 	}
 
 	// SleepWaitStrategy using sleep
@@ -101,14 +108,39 @@ func (c *Context) Commit(seq Sequencer, value uint64) {
 	atomic.StoreUint64(&c.atomicSequences[seq.offset].value, value)
 }
 
+//-------------------------------
 // WaitStrategy definitions
+//-------------------------------
+
+func NewBlockingWaitStrategy() *BlockingWaitStrategy {
+	s := &BlockingWaitStrategy{}
+	s.cond = sync.NewCond(&s.mut)
+	return s
+}
+
+// Wait for blocking strategy
+func (s *BlockingWaitStrategy) Wait() {
+	s.mut.Lock()
+	s.cond.Wait()
+	s.mut.Unlock()
+}
+
+func (s *BlockingWaitStrategy) NotifyAll() {
+	s.cond.Broadcast()
+}
 
 // Wait for sleep strategy
 func (s SleepWaitStrategy) Wait() {
 	time.Sleep(s.Duration)
 }
 
-// Wait using yielding
+func (s SleepWaitStrategy) NotifyAll() {
+}
+
+// Wait for yielding strategy
 func (s YieldingWaitStrategy) Wait() {
 	runtime.Gosched()
+}
+
+func (s YieldingWaitStrategy) NotifyAll() {
 }
