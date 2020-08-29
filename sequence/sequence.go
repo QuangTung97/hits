@@ -1,6 +1,7 @@
 package sequence
 
 import (
+	"runtime"
 	"sync/atomic"
 	"time"
 )
@@ -38,9 +39,8 @@ type (
 		Duration time.Duration
 	}
 
-	// BusySpinWaitStrategy using busy loop
-	BusySpinWaitStrategy struct {
-		Loop uint64
+	// YieldingWaitStrategy using yielding
+	YieldingWaitStrategy struct {
 	}
 )
 
@@ -108,11 +108,7 @@ func (s SleepWaitStrategy) Wait() {
 	time.Sleep(s.Duration)
 }
 
-var fakeCount uint = 0
-
-// Wait for busy spin strategy
-func (s BusySpinWaitStrategy) Wait() {
-	for i := uint64(0); i < s.Loop; i++ {
-		fakeCount++
-	}
+// Wait using yielding
+func (s YieldingWaitStrategy) Wait() {
+	runtime.Gosched()
 }
