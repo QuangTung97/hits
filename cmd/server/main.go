@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/QuangTung97/hits"
 	"log"
-	"time"
 )
 
 type Processor struct {
@@ -23,7 +22,7 @@ func (p *Processor) Process(
 }
 
 func (p *Processor) Init() uint64 {
-	return 1
+	return 0
 }
 
 func (db *DBJournaler) Store(events []hits.MarshalledEvent) {
@@ -31,6 +30,7 @@ func (db *DBJournaler) Store(events []hits.MarshalledEvent) {
 }
 
 func (db *DBJournaler) ReadFrom(fromSequence uint64) ([]hits.MarshalledEvent, error) {
+	log.Println("ReadFrom")
 	res := make([]hits.MarshalledEvent, 0)
 	return res, hits.ErrEventsNotFound
 }
@@ -47,7 +47,6 @@ func sendCommands(ch chan<- hits.Command) {
 			Value:   "abcd",
 			ReplyTo: replyChan,
 		}
-		time.Sleep(10 * time.Second)
 	}
 }
 

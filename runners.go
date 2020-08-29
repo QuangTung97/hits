@@ -1,10 +1,11 @@
 package hits
 
 import (
-	"github.com/QuangTung97/hits/rpc"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/QuangTung97/hits/rpc"
 
 	"google.golang.org/grpc"
 )
