@@ -214,8 +214,10 @@ func (c *Context) runRPCServer(wg *sync.WaitGroup) {
 
 	server := grpc.NewServer()
 
+	init := newInitService(c)
+
 	rpc.RegisterObserverServiceServer(server, c.observer)
-	// rpc.RegisterInitServiceServer(server, c.in)
+	rpc.RegisterInitServiceServer(server, init)
 
 	listener, err := net.Listen("tcp", ":5000")
 	if err != nil {

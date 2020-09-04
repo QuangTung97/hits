@@ -101,11 +101,14 @@ func (s *observerService) setLastEvent(lastEvent MarshalledEvent) {
 }
 
 // Listen is a client API
-func Listen(ctx context.Context, address string, ch chan<- MarshalledEvent) error {
+func Listen(ctx context.Context, address string, callback func(event MarshalledEvent)) error {
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
 		return err
 	}
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	client := rpc.NewObserverServiceClient(conn)
 	events, err := client.Listen(ctx, &rpc.ListenRequest{})
@@ -117,11 +120,11 @@ func Listen(ctx context.Context, address string, ch chan<- MarshalledEvent) erro
 		if err != nil {
 			return err
 		}
-		ch <- MarshalledEvent{
+		callback(MarshalledEvent{
 			Type:      EventType(event.Type),
 			Sequence:  event.Sequence,
 			Timestamp: event.Timestamp,
 			Data:      event.Data,
-		}
+		})
 	}
 }

@@ -7,16 +7,10 @@ import (
 )
 
 func main() {
-	ch := make(chan hits.MarshalledEvent, 1024)
-	go func() {
-		err := hits.Listen(context.Background(), ":5000", ch)
-		if err != nil {
-			panic(err)
-		}
-	}()
-
-	for {
-		e := <-ch
+	err := hits.Listen(context.Background(), ":5000", func(e hits.MarshalledEvent) {
 		fmt.Println(e.Sequence, e.Timestamp, e.Data)
+	})
+	if err != nil {
+		panic(err)
 	}
 }

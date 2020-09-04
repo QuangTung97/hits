@@ -1,8 +1,10 @@
 package main
 
 import (
-	"github.com/QuangTung97/hits"
 	"log"
+	"time"
+
+	"github.com/QuangTung97/hits"
 )
 
 type processor struct {
@@ -18,6 +20,7 @@ func (p *processor) Process(
 	cmdType hits.CommandType, cmd interface{}, timestamp uint64,
 ) (eventType hits.EventType, event interface{}) {
 	log.Println("PROC:", cmdType, cmd, timestamp)
+	time.Sleep(5 * time.Second)
 	return hits.EventType(cmdType + 10), cmd.(string) + " tung"
 }
 
@@ -32,7 +35,20 @@ func (db *dbJournaler) Store(events []hits.MarshalledEvent) {
 func (db *dbJournaler) ReadFrom(fromSequence uint64) ([]hits.MarshalledEvent, error) {
 	log.Println("ReadFrom")
 	res := make([]hits.MarshalledEvent, 0)
-	return res, hits.ErrEventsNotFound
+	res = append(res, hits.MarshalledEvent{
+		Type:      1,
+		Sequence:  1,
+		Timestamp: 12354,
+		Data:      nil,
+	})
+	res = append(res, hits.MarshalledEvent{
+		Type:      1,
+		Sequence:  2,
+		Timestamp: 43567,
+		Data:      nil,
+	})
+
+	return res, nil
 }
 
 func (db *dbWriter) Write(events []hits.Event) {
