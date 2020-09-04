@@ -46,6 +46,8 @@ func (s *initService) ReadEvents(
 	return nil
 }
 
+// ReadEventsFrom reads all events from event store with sequence >= initSequence
+// return io.EOF when finish successfully
 func ReadEventsFrom(ctx context.Context, address string,
 	initSequence uint64, callback func(event MarshalledEvent),
 ) error {

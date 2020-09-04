@@ -8,6 +8,7 @@ import (
 	"github.com/QuangTung97/hits"
 )
 
+// ReadModel interface for read side
 type ReadModel interface {
 	InitFromOriginalDB() uint64
 	Process(event hits.MarshalledEvent)
@@ -18,6 +19,7 @@ type listenEvent struct {
 	err   error
 }
 
+// Listen the events from write side
 func Listen(ctx context.Context, address string, initSequence uint64, readmodel ReadModel) {
 	ch := make(chan listenEvent, 1<<16)
 
@@ -50,6 +52,20 @@ func Listen(ctx context.Context, address string, initSequence uint64, readmodel 
 		readmodel.Process(event)
 		processedSequence = event.Sequence
 	}
+
+	for {
+		e := <-ch
+		if e.err != nil {
+			panic(e.err)
+		}
+
+		if e.event.Sequence <= processedSequence {
+			continue
+		}
+
+		readmodel.Process(e.event)
+		processedSequence = e.event.Sequence
+	}
 }
 
 func handleWhenInitialize(
@@ -57,6 +73,12 @@ func handleWhenInitialize(
 	readmodel ReadModel,
 ) ([]hits.MarshalledEvent, uint64) {
 	unprocessedEvents := make([]hits.MarshalledEvent, 0, 1<<16)
+
+	event := <-ch
+	if event.err != nil {
+		panic(event.err)
+	}
+	unprocessedEvents = append(unprocessedEvents, event.event)
 
 	seqChan := make(chan uint64)
 	go func() {
@@ -83,6 +105,12 @@ func handleWhenHaveExistingEvents(
 	ch <-chan listenEvent, readmodel ReadModel,
 ) ([]hits.MarshalledEvent, uint64) {
 	unprocessedEvents := make([]hits.MarshalledEvent, 0, 1<<16)
+
+	event := <-ch
+	if event.err != nil {
+		panic(event.err)
+	}
+	unprocessedEvents = append(unprocessedEvents, event.event)
 
 	type recvEvent struct {
 		event hits.MarshalledEvent
