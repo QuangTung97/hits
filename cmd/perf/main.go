@@ -89,6 +89,7 @@ func main() {
 		Processor:       p,
 		Journaler:       db,
 		DBWriter:        db,
+		ObserverAddress: ":5000",
 	}
 	ctx := hits.NewContext(cfg)
 

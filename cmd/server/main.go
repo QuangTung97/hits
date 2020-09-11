@@ -78,8 +78,9 @@ func main() {
 			log.Println("MARSHAL", eventType, event)
 			return []byte(event.(string) + " marshalled")
 		},
-		Journaler: &db,
-		DBWriter:  &w,
+		Journaler:       &db,
+		DBWriter:        &w,
+		ObserverAddress: ":5000",
 	}
 	hitsCtx := hits.NewContext(cfg)
 

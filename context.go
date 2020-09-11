@@ -12,6 +12,7 @@ type (
 		Processor       Processor
 		Journaler       Journaler
 		DBWriter        DBWriter
+		ObserverAddress string
 	}
 
 	sequencers struct {
@@ -64,6 +65,7 @@ type (
 		strats       WaitStrategies
 		callbacks    callbacks
 		observer     *observerService
+		observerAddr string
 	}
 )
 
@@ -143,6 +145,11 @@ func NewContext(cfg Config) *Context {
 	}
 	callbacks.dbWriter = cfg.DBWriter
 
+	observerAddr := cfg.ObserverAddress
+	if observerAddr == "" {
+		panic("ObserverAddress must not be empty")
+	}
+
 	return &Context{
 		seqCtx:       seqCtx,
 		bufferMask:   mask,
@@ -154,6 +161,7 @@ func NewContext(cfg Config) *Context {
 		strats:       DefaultWaitStrategies(),
 		callbacks:    callbacks,
 		observer:     newObserverService(),
+		observerAddr: cfg.ObserverAddress,
 	}
 }
 

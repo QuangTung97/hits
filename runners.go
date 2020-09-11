@@ -219,7 +219,7 @@ func (c *Context) runRPCServer(wg *sync.WaitGroup) {
 	rpc.RegisterObserverServiceServer(server, c.observer)
 	rpc.RegisterInitServiceServer(server, init)
 
-	listener, err := net.Listen("tcp", ":5000")
+	listener, err := net.Listen("tcp", c.observerAddr)
 	if err != nil {
 		panic(err)
 	}
