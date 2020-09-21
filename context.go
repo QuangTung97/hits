@@ -2,6 +2,7 @@ package hits
 
 import (
 	"github.com/QuangTung97/hits/sequence"
+	"google.golang.org/grpc"
 )
 
 type (
@@ -13,6 +14,7 @@ type (
 		Journaler       Journaler
 		DBWriter        DBWriter
 		ObserverAddress string
+		GRPCOptions     []grpc.ServerOption
 	}
 
 	sequencers struct {
@@ -66,6 +68,7 @@ type (
 		callbacks    callbacks
 		observer     *observerService
 		observerAddr string
+		gRPCOptions  []grpc.ServerOption
 	}
 )
 
@@ -162,6 +165,7 @@ func NewContext(cfg Config) *Context {
 		callbacks:    callbacks,
 		observer:     newObserverService(),
 		observerAddr: cfg.ObserverAddress,
+		gRPCOptions:  cfg.GRPCOptions,
 	}
 }
 

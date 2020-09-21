@@ -212,7 +212,7 @@ func (c *Context) runReplier(wg *sync.WaitGroup, initSequence uint64) {
 func (c *Context) runRPCServer(wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	server := grpc.NewServer()
+	server := grpc.NewServer(c.gRPCOptions...)
 
 	init := newInitService(c)
 
