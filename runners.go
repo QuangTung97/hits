@@ -209,10 +209,11 @@ func (c *Context) runReplier(wg *sync.WaitGroup, initSequence uint64) {
 	}
 }
 
-func (c *Context) runRPCServer(wg *sync.WaitGroup) {
+func (c *Context) runRPCServer(wg *sync.WaitGroup, onServer func(server *grpc.Server)) {
 	defer wg.Done()
 
 	server := grpc.NewServer(c.gRPCOptions...)
+	onServer(server)
 
 	init := newInitService(c)
 
@@ -231,7 +232,10 @@ func (c *Context) runRPCServer(wg *sync.WaitGroup) {
 }
 
 // Run starts the HITS
-func (c *Context) Run(cmdChan <-chan Command) {
+func (c *Context) Run(cmdChan <-chan Command, opts ...RunOption) {
+	runOpts := newRunOptions()
+	runOpts.apply(opts...)
+
 	var wg sync.WaitGroup
 	wg.Add(8)
 
@@ -239,7 +243,7 @@ func (c *Context) Run(cmdChan <-chan Command) {
 
 	c.initSequencers(initSequence)
 
-	go c.runRPCServer(&wg)
+	go c.runRPCServer(&wg, runOpts.onServer)
 
 	go c.runProducer(&wg, cmdChan, initSequence)
 	go c.runProcessor(&wg, initSequence)
